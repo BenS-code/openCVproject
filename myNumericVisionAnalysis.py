@@ -5,6 +5,7 @@ import cv2
 from PIL import Image, ImageTk
 import numpy as np
 from keras.models import load_model
+import matplotlib.pyplot as plt
 
 
 class NumericRecognizerApp:
@@ -138,12 +139,31 @@ class NumericRecognizerApp:
 
             # Preprocess the image for the CNN model
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            resized = cv2.resize(gray, (28, 28))
-            normalized = resized / 255.0
-            reshaped = np.reshape(normalized, (1, 28, 28, 1))  # Reshape to match model input shape
+            # normalized = gray / 255.0
+
+            # Apply Canny edge detection
+            edges = cv2.Canny(gray, threshold1=30, threshold2=100)
+            _, thresholded_edges = cv2.threshold(edges, 50, 255, cv2.THRESH_BINARY)
+
+            # Define a kernel for dilation
+            kernel = np.ones((5, 5), np.uint8)  # Adjust the kernel size as needed
+
+            # Perform dilation to thicken the edges
+            thickened_edges = cv2.dilate(edges, kernel, iterations=5)
+
+            # Reverse black and white using bitwise NOT operation
+            reversed_image = cv2.bitwise_not(thickened_edges)
+
+            blurred_image = cv2.GaussianBlur(reversed_image, (5, 5), 0)
+
+            resized = cv2.resize(blurred_image, (28, 28))
+
+            reshaped = np.reshape(resized, (1, 28, 28, 1))  # Reshape to match model input shape
 
             # Load pre-trained CNN model
             model = load_model("digit_recognition_model.h5")  # Change this to your model path
+
+            plt.imshow(blurred_image, cmap='gray')
 
             # Predict digit using the loaded model
             prediction = model.predict(reshaped)
@@ -172,6 +192,8 @@ class NumericRecognizerApp:
             self.image_frame.configure(image=imgtk)
 
             print(f"Predicted digit: {digit}")
+
+            plt.show()
         else:
             print("Camera is not connected.")
 
