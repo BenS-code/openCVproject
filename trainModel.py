@@ -6,7 +6,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Load MNIST dataset
-(train_images, train_labels), (test_images, test_labels) = mnist.load_data()
+# (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
+
+with np.load('mnist.npz', allow_pickle=True) as f:
+    train_images, train_labels = f['x_train'], f['y_train']
+    test_images, test_labels = f['x_test'], f['y_test']
 
 # Preprocess the data
 train_images = train_images / 255.0
